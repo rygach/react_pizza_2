@@ -6,6 +6,8 @@ import Categories from './Components/Categories';
 import Sort from './Components/Sort';
 import Pizza from './Components/Pizza';
 
+import pizzas from './assets/pizzas.json';
+
 function App() {
   return (
     <div className="App">
@@ -19,7 +21,9 @@ function App() {
             </div>
             <h2 className="content__title">Все пиццы</h2>
             <div className="content__items">
-              <Pizza title="Мексиканская" price={500} />
+              {pizzas.map((obj) => (
+                <Pizza key={obj.id} image={obj.imageUrl} {...obj} />
+              ))}
             </div>
           </div>
         </div>
