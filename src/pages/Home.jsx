@@ -1,10 +1,11 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
 
 import '../scss/app.scss';
 import { SearchContext } from '../App';
 
-import { setCategoryId } from '../redux/slices/filterSlice';
+import { setCategoryId, setCurrentPage } from '../redux/slices/filterSlice';
 import Categories from '../Components/Categories';
 import Sort from '../Components/Sort';
 import PizzaBlock from '../Components/PizzaBlock';
@@ -13,25 +14,22 @@ import Pagination from '../Components/Pagination';
 
 export const Home = () => {
   const dispatch = useDispatch();
-
-  const { categoryId, sort } = useSelector((state) => state.filter);
-
-  console.log('id category', categoryId);
+  const { categoryId, sort, currentPage } = useSelector((state) => state.filter);
 
   // https://62afefe0b0a980a2ef469e0b.mockapi.io/items
   const [items, setItems] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  // скрыл стейт, который раньше использовался в фильтрации
+  // const [categoryId, setCategoryId] = React.useState(0);
+  const { searchValue } = React.useContext(SearchContext);
 
   const onChangeCategory = (id) => {
-    console.log(id);
     dispatch(setCategoryId(id));
   };
 
-  // скрыл стейт, который раньше использовался в фильтрации
-  // const [categoryId, setCategoryId] = React.useState(0);
-  // захордкодили количество страниц для реализации пагинации. так пришлось сделать из-за отсутствия нормального бэка
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const { searchValue } = React.useContext(SearchContext);
+  const onChangePage = (number) => {
+    dispatch(setCurrentPage(number));
+  };
 
   const pizzas = items
     // фильтрация оффлайн, по статчиным данным. не использую, потому что есть фильтрация по бэку
@@ -52,14 +50,23 @@ export const Home = () => {
     const category = categoryId > 0 ? `category=${categoryId}` : ``;
     const search = searchValue ? `&search=${searchValue}` : '';
 
-    fetch(
-      `https://62afefe0b0a980a2ef469e0b.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`,
-    )
+    // fetch(
+    //   `https://62afefe0b0a980a2ef469e0b.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`,
+    // )
+    //   .then((res) => {
+    //     return res.json();
+    //   })
+    //   .then((arr) => {
+    //     setItems(arr);
+    //     setIsLoading(false);
+    //   });
+
+    axios
+      .get(
+        `https://62afefe0b0a980a2ef469e0b.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`,
+      )
       .then((res) => {
-        return res.json();
-      })
-      .then((arr) => {
-        setItems(arr);
+        setItems(res.data);
         setIsLoading(false);
       });
     window.scrollTo(0, 0);
@@ -74,7 +81,7 @@ export const Home = () => {
         </div>
         <h2 className="content__title">Все пиццы</h2>
         <div className="content__items">{isLoading ? skeletons : pizzas}</div>
-        <Pagination onChangePage={(numberPage) => setCurrentPage(numberPage)} />
+        <Pagination currentPage={currentPage} onChangePage={onChangePage} />
       </div>
     </>
   );
