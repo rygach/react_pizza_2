@@ -25,7 +25,6 @@ export const Home = () => {
   // так чище и понятнее код
   const isSearch = React.useRef(false);
   const isMounted = React.useRef(false);
-  console.log(isMounted.current);
 
   // https://62afefe0b0a980a2ef469e0b.mockapi.io/items
   const [items, setItems] = React.useState([]);
