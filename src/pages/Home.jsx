@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
 import qs from 'qs';
 
 import '../scss/app.scss';
 import { SearchContext } from '../App';
 
 import { setCategoryId, setCurrentPage, setFilters } from '../redux/slices/filterSlice';
+import { fetchPizzas } from '../redux/slices/pizzaSlice';
 import Categories from '../Components/Categories';
 import Sort from '../Components/Sort';
 import PizzaBlock from '../Components/PizzaBlock';
@@ -18,7 +18,6 @@ import { popupList } from '../Components/Sort';
 export const Home = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { categoryId, sort, currentPage } = useSelector((state) => state.filter);
   // вот эти две переменные насколько я понял используются как две переменные
   // для отслеживания состояния поиска и рендера. используется именно реф, потому что он сохраняет состояние, в котором его могли оставить в прошлый рендер
   // то есть это по сути переменная вне функции Home, но переменные вне функции home- зашквар, а это типо React хотя бы
@@ -26,9 +25,8 @@ export const Home = () => {
   const isSearch = React.useRef(false);
   const isMounted = React.useRef(false);
 
-  // https://62afefe0b0a980a2ef469e0b.mockapi.io/items
-  const [items, setItems] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const { items, status } = useSelector((state) => state.pizza);
+  const { categoryId, sort, currentPage } = useSelector((state) => state.filter);
   const { searchValue } = React.useContext(SearchContext);
 
   const onChangeCategory = (id) => {
@@ -43,25 +41,23 @@ export const Home = () => {
 
   const skeletons = [...new Array(6)].map((_, index) => <Skeleton key={index} />);
 
-  // это функция, куда мы просто засунули наш запрос пицц.
-  // вынесли эту функцию для более читаемого кода,
-  // эту функцию мы юзаем только в одном useEffect
-  const fetchPizzas = () => {
-    setIsLoading(true);
-
+  // после рефакторинга fetch теперь делается в асинхронном экшене редакс-тулкита
+  // здесь мы просто засовываем в стор данные, которые получили с поисковой строки, а дальше приложуха уже отслеживая useEffect'ы делает перерисовку
+  const getPizzas = async () => {
     const sortBy = sort.sortProperty.replace('-', '');
     const order = sort.sortProperty.includes('-') ? 'asc' : 'desc';
     const category = categoryId > 0 ? `category=${categoryId}` : ``;
     const search = searchValue ? `&search=${searchValue}` : '';
 
-    axios
-      .get(
-        `https://62afefe0b0a980a2ef469e0b.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`,
-      )
-      .then((res) => {
-        setItems(res.data);
-        setIsLoading(false);
-      });
+    dispatch(
+      fetchPizzas({
+        sortBy,
+        order,
+        category,
+        search,
+        currentPage,
+      }),
+    );
   };
 
   // этот useEffect тупо вшивает параметры в URL, но делает это по-умному
@@ -115,7 +111,7 @@ export const Home = () => {
     window.scrollTo(0, 0);
 
     if (!isSearch.current) {
-      fetchPizzas();
+      getPizzas();
     }
 
     isSearch.current = false;
@@ -129,7 +125,16 @@ export const Home = () => {
           <Sort />
         </div>
         <h2 className="content__title">Все пиццы</h2>
-        <div className="content__items">{isLoading ? skeletons : pizzas}</div>
+        {status === 'error' ? (
+          <div className="content__error-info">
+            <h2>FFFFFFFFF KZZZZZZZ 😕</h2>
+            <p>К сожалению, произошла ошибка</p>
+            <p>Советуем найти в себе силы дописать бэкенд</p>
+          </div>
+        ) : (
+          <div className="content__items">{status === 'loading' ? skeletons : pizzas}</div>
+        )}
+
         <Pagination currentPage={currentPage} onChangePage={onChangePage} />
       </div>
     </>
