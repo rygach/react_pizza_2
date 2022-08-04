@@ -1,13 +1,14 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { addItem } from '../../redux/slices/cartSlice';
+import { addItem, selectCartItemById } from '../../redux/slices/cartSlice';
 
 const typeNames = ['тонкое', 'традиционное'];
 
 function PizzaBlock({ id, title, price, image, sizes, types }) {
   const dispatch = useDispatch();
-  const cartItem = useSelector((state) => state.cart.items.find((obj) => obj.id === id));
+  // тут раньше была в useSelector'е прописана сразу логика, но Арчаков сказал, что круто выносить часто повторяющиеся селекторы в слайсы. В нашем приложении конечно не так много селекторов в целом, из них только один повторяется один раз. Поэтому данная операция носит, скорее, учебный характер
+  const cartItem = useSelector(selectCartItemById(id));
   const [activeType, setActiveType] = React.useState(0);
   const [activeSize, setActiveSize] = React.useState(0);
 
