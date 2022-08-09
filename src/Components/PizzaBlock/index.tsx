@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { addItem, selectCartItemById } from '../../redux/slices/cartSlice';
+import { addItem, selectCartItemById } from '../../redux/slices/cartSlice.ts';
 
 const typeNames = ['тонкое', 'традиционное'];
 
-function PizzaBlock({ id, title, price, image, sizes, types }) {
+const PizzaBlock: React.FC = ({ id, title, price, image, sizes, types }) => {
   const dispatch = useDispatch();
   // тут раньше была в useSelector'е прописана сразу логика, но Арчаков сказал, что круто выносить часто повторяющиеся селекторы в слайсы. В нашем приложении конечно не так много селекторов в целом, из них только один повторяется один раз. Поэтому данная операция носит, скорее, учебный характер
   const cartItem = useSelector(selectCartItemById(id));
@@ -74,6 +74,6 @@ function PizzaBlock({ id, title, price, image, sizes, types }) {
       </div>
     </div>
   );
-}
+};
 
 export default PizzaBlock;

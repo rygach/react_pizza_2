@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectSort, setSort } from '../redux/slices/filterSlice';
+import { selectSort, setSort } from '../redux/slices/filterSlice.ts';
 
 export const popupList = [
   { name: 'популярности(DESC)', sortProperty: 'rating' },
@@ -11,7 +11,7 @@ export const popupList = [
   { name: 'алфавиту(ASC)', sortProperty: '-title' },
 ];
 
-function Sort() {
+const Sort: React.FC = () => {
   const dispatch = useDispatch();
   const sort = useSelector(selectSort);
   const sortRef = React.useRef();
@@ -68,6 +68,6 @@ function Sort() {
       )}
     </div>
   );
-}
+};
 
 export default Sort;

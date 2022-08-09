@@ -1,26 +1,25 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import qs from 'qs';
 
 import '../scss/app.scss';
-import { SearchContext } from '../App';
 
 import {
   selectFilter,
   setCategoryId,
   setCurrentPage,
   setFilters,
-} from '../redux/slices/filterSlice';
-import { fetchPizzas, selectPizzaData } from '../redux/slices/pizzaSlice';
-import Categories from '../Components/Categories';
-import Sort from '../Components/Sort';
-import PizzaBlock from '../Components/PizzaBlock';
-import Skeleton from '../Components/PizzaBlock/Skeleton';
-import Pagination from '../Components/Pagination';
-import { popupList } from '../Components/Sort';
+} from '../redux/slices/filterSlice.ts';
+import { fetchPizzas, selectPizzaData } from '../redux/slices/pizzaSlice.ts';
+import Categories from '../Components/Categories.tsx';
+import Sort from '../Components/Sort.tsx';
+import PizzaBlock from '../Components/PizzaBlock/index.tsx';
+import Skeleton from '../Components/PizzaBlock/Skeleton.tsx';
+import Pagination from '../Components/Pagination/index.tsx';
+import { popupList } from '../Components/Sort.tsx';
 
-export const Home = () => {
+export const Home: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   // вот эти две переменные насколько я понял используются как две переменные
@@ -41,7 +40,11 @@ export const Home = () => {
     dispatch(setCurrentPage(number));
   };
 
-  const pizzas = items.map((obj) => <PizzaBlock key={obj.id} image={obj.imageUrl} {...obj} />);
+  const pizzas = items.map((obj) => (
+    <Link key={obj.id} to={`/pizza/${obj.id}`}>
+      <PizzaBlock image={obj.imageUrl} {...obj} />
+    </Link>
+  ));
 
   const skeletons = [...new Array(6)].map((_, index) => <Skeleton key={index} />);
 
