@@ -1,31 +1,44 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectSort, setSort } from '../redux/slices/filterSlice.ts';
+import { selectSort, setSort, SortPropertyEnum } from '../redux/slices/filterSlice';
 
-export const popupList = [
-  { name: 'популярности(DESC)', sortProperty: 'rating' },
-  { name: 'популярности(ASC)', sortProperty: '-rating' },
-  { name: 'цене(DESC)', sortProperty: 'price' },
-  { name: 'цене(ASC)', sortProperty: '-price' },
-  { name: 'алфавиту(DESC)', sortProperty: 'title' },
-  { name: 'алфавиту(ASC)', sortProperty: '-title' },
+type SortItem = {
+  name: string;
+  sortProperty: SortPropertyEnum;
+};
+
+// зачем такое значение свойства path я хз, и почему TS перестал ругаться после добавления здесь доп MouseEvent'а, я тоже хз. Непонятный момент немного
+type PopupOtside = MouseEvent & {
+  path: Node[];
+};
+
+export const popupList: SortItem[] = [
+  { name: 'популярности(DESC)', sortProperty: SortPropertyEnum.RATING_DESC },
+  { name: 'популярности(ASC)', sortProperty: SortPropertyEnum.RATING_ASC },
+  { name: 'цене(DESC)', sortProperty: SortPropertyEnum.PRICE_DESC },
+  { name: 'цене(ASC)', sortProperty: SortPropertyEnum.PRICE_ASC },
+  { name: 'алфавиту(DESC)', sortProperty: SortPropertyEnum.TITLE_DESC },
+  { name: 'алфавиту(ASC)', sortProperty: SortPropertyEnum.TITLE_ASC },
 ];
 
 const Sort: React.FC = () => {
   const dispatch = useDispatch();
   const sort = useSelector(selectSort);
-  const sortRef = React.useRef();
+  const sortRef = React.useRef<HTMLDivElement>(null);
 
   const [open, setOpen] = React.useState(false);
 
-  const onClickListItem = (i) => {
-    dispatch(setSort(i));
+  const onClickListItem = (obj: SortItem) => {
+    dispatch(setSort(obj));
     setOpen(false);
   };
 
+  // УБРАТЬ ANY  НАХУЙ
   React.useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.path.includes(sortRef.current)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      const _event = event as PopupOtside;
+
+      if (sortRef.current && !_event.path.includes(sortRef.current)) {
         setOpen(false);
       }
     };

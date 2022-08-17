@@ -1,27 +1,29 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import qs from 'qs';
 
 import '../scss/app.scss';
 
 import {
+  FilterSliceState,
   selectFilter,
   setCategoryId,
   setCurrentPage,
   setFilters,
-} from '../redux/slices/filterSlice.ts';
-import { fetchPizzas, selectPizzaData } from '../redux/slices/pizzaSlice.ts';
-import Categories from '../Components/Categories.tsx';
-import Sort from '../Components/Sort.tsx';
-import PizzaBlock from '../Components/PizzaBlock/index.tsx';
-import Skeleton from '../Components/PizzaBlock/Skeleton.tsx';
-import Pagination from '../Components/Pagination/index.tsx';
-import { popupList } from '../Components/Sort.tsx';
+} from '../redux/slices/filterSlice';
+import { fetchPizzas, SearchPizzaParams, selectPizzaData } from '../redux/slices/pizzaSlice';
+import Categories from '../Components/Categories';
+import Sort from '../Components/Sort';
+import PizzaBlock from '../Components/PizzaBlock/index';
+import Skeleton from '../Components/PizzaBlock/Skeleton';
+import Pagination from '../Components/Pagination/index';
+import { popupList } from '../Components/Sort';
+import { useAppDispatch } from '../redux/store';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   // вот эти две переменные насколько я понял используются как две переменные
   // для отслеживания состояния поиска и рендера. используется именно реф, потому что он сохраняет состояние, в котором его могли оставить в прошлый рендер
   // то есть это по сути переменная вне функции Home, но переменные вне функции home- зашквар, а это типо React хотя бы
@@ -32,19 +34,15 @@ export const Home: React.FC = () => {
   const { items, status } = useSelector(selectPizzaData);
   const { categoryId, sort, currentPage, searchValue } = useSelector(selectFilter);
 
-  const onChangeCategory = (id) => {
-    dispatch(setCategoryId(id));
+  const onChangeCategory = (idx: number) => {
+    dispatch(setCategoryId(idx));
   };
 
-  const onChangePage = (number) => {
-    dispatch(setCurrentPage(number));
+  const onChangePage = (page: number) => {
+    dispatch(setCurrentPage(page));
   };
 
-  const pizzas = items.map((obj) => (
-    <Link key={obj.id} to={`/pizza/${obj.id}`}>
-      <PizzaBlock image={obj.imageUrl} {...obj} />
-    </Link>
-  ));
+  const pizzas = items.map((obj: any) => <PizzaBlock key={obj.id} image={obj.imageUrl} {...obj} />);
 
   const skeletons = [...new Array(6)].map((_, index) => <Skeleton key={index} />);
 
@@ -62,7 +60,7 @@ export const Home: React.FC = () => {
         order,
         category,
         search,
-        currentPage,
+        currentPage: String(currentPage),
       }),
     );
   };
@@ -73,45 +71,48 @@ export const Home: React.FC = () => {
   // а вот если мы уже зарендерились хотя бы разок, то там уже чекаем че лежит в редаксе и от туда суем это говно в URL
 
   // всё! в этом useEffect больше ничего не делается. считывание URL параметров и загрузка по ним данных происходит в другом useEffect
-  React.useEffect(() => {
-    if (isMounted.current) {
-      const queryString = qs.stringify({
-        sortProperty: sort.sortProperty,
-        categoryId,
-        currentPage,
-      });
+  // React.useEffect(() => {
+  //   if (isMounted.current) {
+  //     const params = qs.stringify({
+  //       sortProperty: sort.sortProperty,
+  //       categoryId,
+  //       currentPage,
+  //     });
 
-      navigate(`?${queryString}`);
-    }
+  //     // 17.08 это я добавил после того, как увидел её у Арчакова, без неё все работало + в условии сверху было не params, а queryString
+  //     const queryString = qs.stringify(params, { skipNulls: true });
 
-    isMounted.current = true;
-  }, [categoryId, sort.sortProperty, currentPage]);
+  //     navigate(`?${queryString}`);
+  //   }
+  //   // это условие я добавил после того, как увидел её у Арчакова, без неё все работало
+  //   if (!window.location.search) {
+  //     dispatch(fetchPizzas({} as SearchPizzaParams));
+  //   }
+
+  //   isMounted.current = true;
+  // }, [categoryId, sort.sortProperty, currentPage]);
 
   // при первом рендере, проверяем URL-параметры и сохраняем их в редакс
   // это на случай, если кто - то ввёл URL параметры прямо в адресную строку и хочет сразу получить сортированные пиццы
 
   // всё! в данном useEffect больше ничего не происходит. запрос в бд отправляется в другом useEffect
-  React.useEffect(() => {
-    if (
-      window.location.search &&
-      // костыльное решение, потому что если строку ниже убрать - будет баг при обновлении и выбранных пиццах всех
-      window.location.search !== '?sortProperty=rating&categoryId=0&currentPage=1'
-    ) {
-      const params = qs.parse(window.location.search.substring(1));
+  // React.useEffect(() => {
+  //   if (window.location.search) {
+  //     const params = qs.parse(window.location.search.substring(1)) as unknown as SearchPizzaParams;
+  //     const sort = popupList.find((obj) => obj.sortProperty === params.sortBy);
+  //     dispatch(
+  //       setFilters({
+  //         categoryId: Number(params.category),
+  //         currentPage: Number(params.currentPage),
+  //         sort: sort || popupList[0],
+  //         searchValue: params.search,
+  //       }),
+  //     );
 
-      const sort = popupList.find((obj) => obj.sortProperty === params.sortProperty);
-
-      dispatch(
-        setFilters({
-          ...params,
-          sort,
-        }),
-      );
-
-      // вот этот реф тут нужен тупо, чтобы обхитрить логику useEffect, чтобы у нас не происходило при первом рендере два запроса.
-      isSearch.current = true;
-    }
-  }, []);
+  //     // вот этот реф тут нужен тупо, чтобы обхитрить логику useEffect, чтобы у нас не происходило при первом рендере два запроса.
+  //     isSearch.current = true;
+  //   }
+  // }, []);
 
   // данный useEffect мы обернули в проверку useRef'a, потому что если бы мы не меняли этот ref, то у нас бы этот юсэф отработал бы два раза - первый раз по умолчанию, а второй раз когда изменились параметры, за которыми он следит. то есть по своим обязанностям бы перерендер вызвал бы
   React.useEffect(() => {

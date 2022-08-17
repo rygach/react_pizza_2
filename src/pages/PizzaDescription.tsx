@@ -2,7 +2,7 @@ import axios from 'axios';
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
-const PizzaDescription: React.FC = () => {
+const PizzaDescription = () => {
   const [pizza, setPizza] = React.useState<{
     imageUrl: string;
     title: string;

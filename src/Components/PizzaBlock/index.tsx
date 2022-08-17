@@ -1,11 +1,21 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
 
-import { addItem, selectCartItemById } from '../../redux/slices/cartSlice.ts';
+import { addItem, CartItemType, selectCartItemById } from '../../redux/slices/cartSlice';
 
 const typeNames = ['тонкое', 'традиционное'];
 
-const PizzaBlock: React.FC = ({ id, title, price, image, sizes, types }) => {
+type PizzaBlockProps = {
+  id: string;
+  title: string;
+  price: number;
+  image: string;
+  sizes: number[];
+  types: number[];
+};
+
+const PizzaBlock: React.FC<PizzaBlockProps> = ({ id, title, price, image, sizes, types }) => {
   const dispatch = useDispatch();
   // тут раньше была в useSelector'е прописана сразу логика, но Арчаков сказал, что круто выносить часто повторяющиеся селекторы в слайсы. В нашем приложении конечно не так много селекторов в целом, из них только один повторяется один раз. Поэтому данная операция носит, скорее, учебный характер
   const cartItem = useSelector(selectCartItemById(id));
@@ -14,14 +24,16 @@ const PizzaBlock: React.FC = ({ id, title, price, image, sizes, types }) => {
 
   const addedCount = cartItem ? cartItem.count : 0;
 
+  // #REFACTOR нужно убрать count, т.к. его нет смысла передавать, передали, потому что экспортируем тип со свойством count
   const onClickAdd = () => {
-    const item = {
+    const item: CartItemType = {
       id,
       title,
       price,
       image,
-      type: typeNames[activeType],
-      size: sizes[activeSize],
+      types: typeNames[activeType],
+      sizes: sizes[activeSize],
+      count: 0,
     };
     dispatch(addItem(item));
   };
@@ -29,8 +41,10 @@ const PizzaBlock: React.FC = ({ id, title, price, image, sizes, types }) => {
   return (
     <div className="pizza-block-wrapper">
       <div className="pizza-block">
-        <img className="pizza-block__image" src={image} alt="Pizza" />
-        <h4 className="pizza-block__title">{title}</h4>
+        <Link to={`/pizza/${id}`}>
+          <img className="pizza-block__image" src={image} alt="Pizza" />
+          <h4 className="pizza-block__title">{title}</h4>
+        </Link>
         <div className="pizza-block__selector">
           <ul>
             {types.map((typeId) => (
